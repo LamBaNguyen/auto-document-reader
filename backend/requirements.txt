@@ -1,0 +1,9 @@
+Flask
+Flask-PyMongo
+requests
+flask-cors
+pydub
+googletrans==4.0.0-rc1
+pytesseract
+bcrypt
+pyjwt
