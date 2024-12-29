@@ -1,167 +1,165 @@
-import React, { useState } from 'react';
-import UploadDocument from '../components/UploadDocument';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import TTS from "../components/TTS"; // Component Text-to-Speech chính
+import UploadDocument from "../components/UploadDocument"; // Component Upload file
+import History from "../components/History";
+import { useUser } from "../context/UserContext"; // Context lấy thông tin user
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('textToSpeech'); // Tab mặc định là "Văn bản thành giọng nói"
-  const [text, setText] = useState('');
-  const [language, setLanguage] = useState('English (United States)');
-  const [voice, setVoice] = useState('Jenny (Female)');
+  const [activeTab, setActiveTab] = useState("textToSpeech");
+  const { user, loading } = useUser(); // Lấy thông tin user từ context
 
-  // Xử lý tạo âm thanh từ văn bản
-  const handleCreate = () => {
-    alert('Đang tạo giọng nói từ văn bản...');
-  };
-
-  // Xử lý xóa văn bản
-  const handleClear = () => {
-    setText('');
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Đang tải...
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full min-h-screen bg-gray-50">
-       {/* Header Navigation */}
-       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div className="flex min-h-screen w-full h-full">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r shadow-sm flex flex-col">
+        <div className="p-7 flex-grow">
           {/* Logo */}
-          <div className="flex items-center">
-            <img
-              src="./logo.webp" // Đặt đường dẫn tới logo của bạn
-              alt="Logo"
-              className="h-8 w-auto"
-            />
-            <span className="ml-2 text-xl font-semibold text-gray-800">L O R</span>
+          <div className="mb-7">
+            <Link to="/" className="flex items-center no-underline">
+              <img src="./logo.webp" alt="Logo" className="h-8 w-auto" />
+              <span className="ml-2 text-xl font-semibold text-gray-800">
+                LOR
+              </span>
+            </Link>
+            <hr className="mt-4 border-gray-600" />
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex space-x-6">
-            <a href="#clone-voice" className="text-gray-600 hover:text-gray-900">
-              Klon giọng nói
-            </a>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900">
-              Giá cả
-            </a>
-            <a href="#history" className="text-gray-600 hover:text-gray-900">
-              Lịch sử
-            </a>
-            <a href="#blog" className="text-gray-600 hover:text-gray-900">
-              Blog
-            </a>
-          </nav>
-
-          {/* Account Options */}
-          <div className="flex items-center space-x-4">
-            <button className="hidden sm:inline-block bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg">
-              Bảng điều khiển
+          {/* Menu */}
+          <nav className="space-y-2">
+            {" "}
+            <button
+              onClick={() => setActiveTab("textToSpeech")}
+              className={`flex items-center w-full text-left px-4 py-2 rounded-lg font-medium ${
+                activeTab === "textToSpeech"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-file-text mr-2 h-7 w-7"
+              >
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                <path d="M10 9H8"></path>
+                <path d="M16 13H8"></path>
+                <path d="M16 17H8"></path>
+              </svg>
+              Chuyển văn bản thành giọng nói
             </button>
-            <img
-              src="/path-to-avatar.jpg" // Đặt đường dẫn tới ảnh đại diện của bạn
-              alt="User Avatar"
-              className="h-8 w-8 rounded-full"
-            />
-            <select className="text-sm bg-transparent text-gray-600 border-none focus:outline-none">
-              <option value="VN">VN</option>
-              <option value="EN">EN</option>
-            </select>
+            <button
+              onClick={() => setActiveTab("fileToSpeech")}
+              className={`flex items-center w-full text-left px-4 py-2 rounded-lg font-medium ${
+                activeTab === "fileToSpeech"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-file-audio mr-2 h-7 w-7"
+              >
+                <path d="M17.5 22h.5a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"></path>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                <path d="M2 19a2 2 0 1 1 4 0v1a2 2 0 1 1-4 0v-4a6 6 0 0 1 12 0v4a2 2 0 1 1-4 0v-1a2 2 0 1 1 4 0"></path>
+              </svg>
+              Chuyển tệp thành giọng nói
+            </button>
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`flex items-center w-full text-left px-4 py-2 rounded-lg font-medium ${
+                activeTab === "history"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-history mr-2 h-5 w-5"
+              >
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M12 7v5l4 2"></path>
+              </svg>
+              Lịch sử
+            </button>
+          </nav>
+        </div>
+
+        <div className="p-4">
+        <hr className="mt-4 border-gray-600" />
+
+          {/* User Profile */}
+          <div className="flex items-center mt-4 space-x-2">
+            {/* <img
+              src="https://placekitten.com/40/40"
+              alt="User Profile"
+              className="w-10 h-10 rounded-full"
+            /> */}
+            <div className="flex flex-col cursor-pointer">
+              <span className="font-medium">Account current</span>
+              {/* <span className="text-sm text-gray-500">18299 Tín dụng</span> */}
+            </div>
           </div>
         </div>
-      </header>
-      {/* Tabs */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-2 flex gap-4">
-          <button
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === 'textToSpeech'
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-            onClick={() => setActiveTab('textToSpeech')}
-          >
-            Văn bản thành giọng nói
-          </button>
-          <button
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === 'fileToSpeech'
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-            onClick={() => setActiveTab('fileToSpeech')}
-          >
-            Tệp thành giọng nói
-          </button>
-        </div>
-      </div>
+      </aside>
 
-      {/* Content Area */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {activeTab === 'textToSpeech' ? (
-          // Tab "Văn bản thành giọng nói"
-          <div className="bg-white shadow-md rounded-lg p-6">
-            {/* Text Input */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-800">Nhập văn bản của bạn...</h2>
-              <span className="text-sm text-gray-500">0 / 5000</span>
-            </div>
-            <textarea
-              rows="8"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="w-full mt-4 p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nhập văn bản của bạn..."
-            ></textarea>
-            <div className="flex justify-between items-center mt-4">
-              <button
-                onClick={handleClear}
-                className="text-sm text-gray-600 hover:text-gray-900 underline"
-              >
-                Xóa văn bản
-              </button>
-            </div>
-
-            {/* Options */}
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Ngôn ngữ</label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="h-10 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option>English (United States)</option>
-                  <option>Vietnamese</option>
-                  <option>French</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Giọng nói</label>
-                <select
-                  value={voice}
-                  onChange={(e) => setVoice(e.target.value)}
-                  className="h-10 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option>Jenny (Female)</option>
-                  <option>John (Male)</option>
-                  <option>Anna (Female)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Action Button */}
-            <div className="mt-8">
-              <button
-                onClick={handleCreate}
-                className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg text-lg font-semibold hover:opacity-90 transition duration-300"
-              >
-                Tạo
-              </button>
-            </div>
+      {/* Main Content */}
+      <main className="flex-1 p-8">
+        {activeTab === "textToSpeech" && (
+          <div>
+            {/* <h1 className="text-xl font-bold text-gray-800 mb-4">Chuyển văn bản thành giọng nói</h1> */}
+            <TTS />
           </div>
-        ) : (
-          // Tab "Tệp thành giọng nói"
-          <div className="bg-white shadow-md rounded-lg p-6">
+        )}
+        {activeTab === "fileToSpeech" && (
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">
+              Chuyển tệp thành giọng nói
+            </h1>
             <UploadDocument />
           </div>
         )}
-      </div>
+        {activeTab === "history" && (
+          <div>
+            {/* <h1 className="text-xl font-bold text-gray-800 mb-4">Lịch sử</h1> */}
+            <History />
+          </div>
+        )}
+      </main>
     </div>
   );
 };

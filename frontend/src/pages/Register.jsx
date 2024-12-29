@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../services/auth';
+import { toast } from 'react-toastify';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -12,10 +13,11 @@ const Register = () => {
     e.preventDefault();
     const response = await register({ email, password });
     if (response.success) {
-      alert('Đăng ký thành công!');
+      toast.success('Đăng ký thành công!',{
+        icon: '🎉',});
       navigate('/login'); // Chuyển hướng tới trang đăng nhập
     } else {
-      alert(response.error);
+      toast.error(response.error);
     }
   };
 

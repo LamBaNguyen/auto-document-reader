@@ -22,7 +22,13 @@ def register():
     hashed_password = generate_password_hash(password)
 
     # Thêm người dùng mới vào MongoDB
-    mongo.db.users.insert_one({"email": email, "password": hashed_password, "created_at": datetime.utcnow()})
+    mongo.db.users.insert_one(
+        {
+         "email": email, 
+         "password": hashed_password, 
+         "created_at": datetime.utcnow(),
+         "status": "inactive"
+        })
 
     return jsonify({"success": True, "message": "Đăng ký thành công!"}), 201
 #đăng nhập
@@ -40,6 +46,11 @@ def login():
     
     if not user or not check_password_hash(user['password'], password):
         return jsonify({"success": False, "message": "Sai email hoặc mật khẩu"}), 401
+
+    # Kiểm tra trạng thái người dùng
+    if user['status'] == "inactive":
+        # Cập nhật trạng thái người dùng thành "active" khi đăng nhập thành công
+        mongo.db.users.update_one({"email": email}, {"$set": {"status": "active"}})
 
     # Tạo JWT token
     access_token = create_access_token(identity=str(user['_id']), expires_delta=timedelta(hours=1))

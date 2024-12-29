@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Footer from '../components/Footer';
 
 const Home = () => {
   return (
@@ -17,15 +18,10 @@ const Home = () => {
               <span className="text-green-500">LOR là một công cụ đọc tài liệu tự động </span> <span>chuyển văn bản thành giọng nói (TTS) trực tuyến miễn phí,</span> <Link to="/login" className="no-underline">Đăng nhập</Link> để có thêm trải nghiệm nha!
             </p>
           </div>
-          <footer className="bg-gray-200 p-4 text-center">
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                © {new Date().getFullYear()} L O R. All Rights Reserved.
-              </p>
-            </div>
-          </footer>
+  
         </div>
       </div>
+      <Footer/>
     </main>
   );
 };

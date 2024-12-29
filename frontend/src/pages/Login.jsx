@@ -2,25 +2,30 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/auth';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { useUser } from '../context/UserContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { setUser } = useUser(); // Lấy setUser từ context để cập nhật thông tin người dùng
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await login({ email, password });
+
     if (response.success) {
-      // Lưu token vào localStorage
-      localStorage.setItem('token', response.data.token);
-      alert('Đăng nhập thành công!');
+      // Lưu thông tin người dùng vào UserContext và localStorage
+      const userData = response.data.user; // Lấy thông tin người dùng từ phản hồi API
+      setUser(userData); // Cập nhật thông tin người dùng vào context
+      localStorage.setItem('user', JSON.stringify(userData)); // Lưu vào localStorage
+      toast.success('Đăng nhập thành công!');
       navigate('/dashboard'); // Điều hướng đến trang dashboard
     } else {
-      alert(response.error);
+      toast.error(response.error);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
