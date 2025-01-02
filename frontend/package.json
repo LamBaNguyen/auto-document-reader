@@ -1,6 +1,8 @@
 {
     "name": "frontend",
     "version": "0.1.0",
+    "proxy": "https://be-read-doc-automatic.vercel.app",
+    "homepage": "http://localhost:3000",
     "private": true,
     "dependencies": {
         "@google-cloud/text-to-speech": "^5.6.0",

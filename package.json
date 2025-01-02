@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "http-proxy-middleware": "^3.0.3",
     "mongodb": "^5.9.2"
   },
   "devDependencies": {
