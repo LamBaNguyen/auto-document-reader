@@ -3,7 +3,9 @@
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "http-proxy-middleware": "^3.0.3",
-    "mongodb": "^5.9.2"
+    "mammoth": "^1.9.0",
+    "mongodb": "^5.9.2",
+    "pdfjs-dist": "^4.8.69"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

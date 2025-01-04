@@ -1,9 +1,47 @@
 from datetime import datetime, timedelta
 from flask import request, jsonify, current_app
 from werkzeug.security import check_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, decode_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+def get_data_by_user_id(user_id):
+    try:
+        mongo = current_app.mongo
+        data = mongo.db.data.find({"user_id": user_id})
+        # print(data)
+        if not data:
+            return jsonify({"message": "Data not found"}), 404
+        
+        data_list = []
+        for a in data:
+            # MongoDB objectId sẽ được chuyển thành string nếu cần
+            a['_id'] = str(a['_id'])
+            data_list.append(a)
+
+        return jsonify(data_list)
+    except Exception as e:
+        print(e)
+
+def decode(token):
+    return decode_token(token)
+
+#add_document
+def add_document(user_id, text, audio, voice):
+    if not user_id and not text and not audio and not voice :
+        return False
+    
+    mongo = current_app.mongo
+    mongo.db.data.insert_one(
+        {
+         "user_id": user_id, 
+         "text": text, 
+         "audio": audio,
+         "voice": voice,
+         "created_at": datetime.now()
+        })
+    return True
+    
 #đăng ký
 def register():
     data = request.get_json()
@@ -53,10 +91,11 @@ def login():
         mongo.db.users.update_one({"email": email}, {"$set": {"status": "active"}})
 
     # Tạo JWT token
-    access_token = create_access_token(identity=str(user['_id']), expires_delta=timedelta(hours=1))
-
+    access_token = create_access_token(identity=str(user['_id']))
+    decodea =decode(access_token)
+    print('decode_token',decodea)
     return jsonify({
         "success": True,
         "message": "Đăng nhập thành công!",
-        "token": access_token
+        "token": decodea
     }), 200

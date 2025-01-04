@@ -1,46 +1,22 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { textToSpeech } from "../services/api";
+// import { textToSpeech } from "../services/api";
 
 const TTS = () => {
   const [text, setText] = useState("");
-  const [speed, setSpeed] = useState(0);
-  const [volume, setVolume] = useState(0);
-  const [pitch, setPitch] = useState(0);
-  const [voiceType, setVoiceType] = useState("standard");
-  const [language, setLanguage] = useState("en-US");
-  const [voice, setVoice] = useState("Jenny");
+  const [speed, setSpeed] = useState(1);
+  const [volume, setVolume] = useState(100);
+  const [language, setLanguage] = useState("vi-VN");
+  const [voice, setVoice] = useState("FEMALE");
+  const [audioBase64, setAudioBase64] = useState(""); // Lưu trữ Base64 từ API
+  const [audioPlayer, setAudioPlayer] = useState(null); // Lưu trữ phần tử audio
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const textInput = useRef(null);
-
-  const isValidBase64 = (str) => {
-    try {
-      atob(str);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-  const cleanBase64 = (str) => {
-    // 1. Loại bỏ tiền tố b' và dấu nháy đơn
-    let cleaned = str.replace(/^b['"]/, "");
-    // 2. Loại bỏ ký tự \xNN
-    cleaned = cleaned.replace(/\\x[0-9a-fA-F]{2}/g, "");
-    // 3. Loại bỏ tất cả các ký tự không hợp lệ
-    cleaned = cleaned.replace(/[^A-Za-z0-9+/=]/g, "");
-
-    // 4. Kiểm tra và thêm padding
-    const padding = cleaned.length % 4;
-    if (padding === 2) {
-      cleaned += "==";
-    } else if (padding === 3) {
-      cleaned += "=";
-    }
-    return cleaned;
-  };
-
-  const handleGenerateVoice = async () => {
+  // Hàm lấy Base64 từ API và điều chỉnh tốc độ
+  const getAndAdjustAudio = async () => {
     if (!text.trim()) {
       toast.error("Bạn chưa nhập văn bản ^^!", {
         position: "bottom-right",
@@ -54,70 +30,122 @@ const TTS = () => {
       textInput.current.focus();
       return;
     }
+    setIsLoading(true);
 
     try {
-      toast.info("Đang xử lý, vui lòng chờ...");
+      console.log("data", text, language, voice);
+      const text_api = text; // Nội dung văn bản cần chuyển thành âm thanh
+      const lang_api = language; // Ngôn ngữ
+      const gender_api = voice; // Giới tính
+      const token_api = localStorage.getItem('user');
+      // Xây dựng chuỗi x-www-form-urlencoded
+      const params = new URLSearchParams();
+      params.append("text", text_api);
+      params.append("lang", lang_api);
+      params.append("gender", gender_api);
+      params.append("token", token_api);
 
-      const gender = voice === "Jenny" ? "FEMALE" : "MALE";
-      console.log("dữ liệu", text, language);
 
-      const response = await textToSpeech({
-        text,
-        lang: language,
-        gender,
-      });
-      console.log("Response from TTS API:", response);
-      console.log("Response type from TTS API:", typeof response);
-      console.log("Response data type from TTS API:", typeof response.data);
-      console.log("Raw response data:", response.data);
-
-      if (response && response.data && typeof response.data === "string") {
-        try {
-          let cleanedBase64 = cleanBase64(response.data);
-          console.log("Clean:", cleanedBase64);
-          if (!isValidBase64(cleanedBase64)) {
-            throw new Error("Chuỗi base64 không hợp lệ sau khi làm sạch!");
-          }
-
-          // Convert the base64 string to a byte array
-          const byteCharacters = atob(cleanedBase64);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-
-          const blob = new Blob([byteArray], { type: "audio/mp3" });
-          const audioUrl = URL.createObjectURL(blob);
-          console.log("audioUrl:", audioUrl);
-          const audio = new Audio(audioUrl);
-          audio.play().catch((error) => {
-            console.error("Error playing audio:", error);
-            toast.error("Đã xảy ra lỗi khi phát âm thanh.");
-          });
-          toast.success("Tạo giọng nói thành công!");
-        } catch (error) {
-          console.error("audioUrl error", error);
-          toast.error("Đã xảy ra lỗi khi tạo giọng nói.");
+      // Gửi yêu cầu POST để lấy Base64 từ API
+      const response = await fetch(
+        "http://127.0.0.1:5000/api/texttospeech",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params.toString(), // Dữ liệu được mã hóa x-www-form-urlencoded
         }
-      } else {
-        toast.error("Đã xảy ra lỗi khi tạo giọng nói, không đúng định dạng.");
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch audio from API");
       }
+
+      const data = await response.json();
+      setAudioBase64(data.data); // Lưu Base64 nhận được từ API
+      playAudio();
     } catch (error) {
-      console.error("Error calling TTS API:", error);
-      toast.error("Lỗi trong quá trình tạo giọng nói. Vui lòng thử lại.");
+      console.error("Error fetching or processing audio:", error);
+      toast.error("Lỗi khi tạo giọng nói, vui lòng thử lại sau!", {
+        position: "bottom-right",
+      });
+    } finally {
+      setIsLoading(false); // Kết thúc loading
     }
   };
 
+  // Hàm chuyển Base64 thành Blob
+  const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64); // Giải mã Base64 thành chuỗi nhị phân
+    const byteArrays = [];
+
+    // Chuyển đổi chuỗi nhị phân thành Uint8Array
+    for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+      const slice = byteCharacters.slice(offset, offset + 1024);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      byteArrays.push(new Uint8Array(byteNumbers));
+    }
+
+    // Tạo Blob từ mảng byte
+    return new Blob(byteArrays, { type: mimeType });
+  };
+
+  // Hàm để phát lại âm thanh từ base64
+
+  // Hàm để phát lại âm thanh từ base64
+  const playAudio = (base64) => {
+    if (base64 && audioPlayer) {
+      // Chuyển Base64 thành Blob với loại âm thanh 'audio/mp3'
+      const blob = base64ToBlob(base64, "audio/mp3");
+      const audioURL = URL.createObjectURL(blob); // Tạo URL từ Blob
+
+      // Thiết lập nguồn phát cho phần tử audio
+      audioPlayer.src = audioURL;
+      audioPlayer.playbackRate = speed; // Đặt tốc độ phát lại
+      audioPlayer.volume = volume / 100;
+      audioPlayer.play(); // Phát âm thanh
+    }
+  };
+  // Cập nhật tốc độ phát
+  const handleSpeedChange = (value) => {
+    setSpeed(parseFloat(value));
+    if (audioPlayer) {
+      audioPlayer.playbackRate = parseFloat(value);
+    }
+  };
+
+  // Cập nhật âm lượng
+  const handleVolumeChange = (value) => {
+    setVolume(Number(value));
+    if (audioPlayer) {
+      audioPlayer.volume = Number(value) / 100; // Volume từ 0 đến 1
+    }
+  };
   const handleReset = () => {
-    setSpeed(0);
-    setVolume(0);
-    setPitch(0);
-    setVoiceType("standard");
-    setLanguage("en-US");
-    setVoice("Jenny");
+    setSpeed(1);
+    setVolume(100);
+    setLanguage("vi-VN");
+    setVoice("FEMALE");
     setText("");
   };
+
+  useEffect(
+    () => {
+      if (audioBase64) {
+        playAudio(audioBase64);
+      }
+      if (audioPlayer) {
+        audioPlayer.playbackRate = speed; // Cập nhật tốc độ
+        audioPlayer.volume = volume / 100; // Cập nhật âm lượng
+      }
+    },
+    [audioBase64],
+    [speed, volume]
+  ); // Mỗi khi audioBase64 thay đổi, sẽ gọi playAudio
 
   return (
     <div className="flex flex-1 flex-col gap-2 p-3 pb-8 md:px-8 lg:px-12">
@@ -140,7 +168,12 @@ const TTS = () => {
           {text.length} / 5000
         </div>
       </div>
-
+      <audio
+        className="w-full"
+        ref={(ref) => setAudioPlayer(ref)}
+        id="audioPlayer"
+        controls
+      ></audio>
       {/* Thanh công cụ */}
       <div className="flex justify-end items-center space-x-2 mb-4">
         <button
@@ -150,10 +183,41 @@ const TTS = () => {
           Xóa văn bản
         </button>
         <button
-          onClick={handleGenerateVoice}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          onClick={getAndAdjustAudio}
+          className={`px-4 py-2 rounded-lg ${
+            isLoading
+              ? "bg-gray-400 text-white cursor-not-allowed"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          }`}
+          disabled={isLoading} // Vô hiệu hóa nút khi đang loading
         >
-          Tạo giọng nói
+          {isLoading ? (
+            <span className="flex items-center space-x-2">
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z"
+                ></path>
+              </svg>
+              <span>Đang tạo...</span>
+            </span>
+          ) : (
+            "Tạo giọng nói"
+          )}
         </button>
       </div>
 
@@ -163,7 +227,7 @@ const TTS = () => {
         <div className="flex-1 mb-4">
           <h2 className="text-lg font-semibold mb-2">Cài đặt giọng nói</h2>
           <div className="flex items-center mb-2">
-            <button
+            {/* <button
               className={`px-3 py-2 rounded-lg border ${
                 voiceType === "standard"
                   ? "bg-blue-50 border-blue-500 text-blue-600"
@@ -172,7 +236,7 @@ const TTS = () => {
               onClick={() => setVoiceType("standard")}
             >
               Giọng nói chuẩn
-            </button>
+            </button> */}
             {/* <button
               className={`px-3 py-2 rounded-lg ml-2 border ${
                 voiceType === "custom" ? "bg-blue-50 border-blue-500 text-blue-600" : "text-gray-700"
@@ -208,8 +272,8 @@ const TTS = () => {
               onChange={(e) => setVoice(e.target.value)}
               className="w-full border rounded-lg p-2 text-gray-700 focus:outline-none"
             >
-              <option value="Jenny">Jenny (Female)</option>
-              <option value="Tom">Tom (Male)</option>
+              <option value="FEMALE">Nữ (Female)</option>
+              <option value="MALE">Nam (Male)</option>
             </select>
           </div>
         </div>
@@ -218,18 +282,26 @@ const TTS = () => {
         <div className="flex-1">
           <h2 className="text-lg font-semibold mb-2">Tùy chỉnh</h2>
           {/* Tốc độ */}
+
           <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-1">
-              Tốc độ
+            <label
+              className="block text-gray-700 font-medium mb-1"
+              htmlFor="speedControl"
+            >
+              Tốc độ:{" "}
             </label>
             <input
-              type="range"
-              min={-100}
-              max={100}
-              value={speed}
-              onChange={(e) => setSpeed(Number(e.target.value))}
               className="w-full"
+              type="range"
+              id="speedControl"
+              min="0.5"
+              max="2"
+              step="0.1"
+              value={speed}
+              // ref={(ref) => setSpeed(ref)}
+              onChange={(e) => handleSpeedChange(e.target.value)}
             />
+            <span id="speedValue">{speed}x</span>
           </div>
 
           {/* Âm lượng */}
@@ -239,16 +311,17 @@ const TTS = () => {
             </label>
             <input
               type="range"
-              min={-100}
+              min={0}
               max={100}
               value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
+              onChange={(e) => handleVolumeChange(e.target.value)}
               className="w-full"
             />
+            <span>{volume}%</span>
           </div>
 
           {/* Cao độ */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-1">
               Cao độ
             </label>
@@ -260,7 +333,7 @@ const TTS = () => {
               onChange={(e) => setPitch(Number(e.target.value))}
               className="w-full"
             />
-          </div>
+          </div> */}
 
           <button
             onClick={handleReset}

@@ -9,6 +9,10 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("textToSpeech");
   const { user, loading } = useUser(); // Lấy thông tin user từ context
 
+  const user_id = localStorage.getItem('user');
+  console.log('User',user_id)
+  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

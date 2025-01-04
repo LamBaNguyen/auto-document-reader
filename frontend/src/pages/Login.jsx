@@ -14,13 +14,14 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await login({ email, password });
-
+    console.log('respon',response.data.token)
     if (response.success) {
       // Lưu thông tin người dùng vào UserContext và localStorage
-      const userData = response.data.user; // Lấy thông tin người dùng từ phản hồi API
+      const userData = response.data.token; // Lấy thông tin người dùng từ phản hồi API
       setUser(userData); // Cập nhật thông tin người dùng vào context
       localStorage.setItem('user', JSON.stringify(userData)); // Lưu vào localStorage
       toast.success('Đăng nhập thành công!');
+      
       navigate('/dashboard'); // Điều hướng đến trang dashboard
     } else {
       toast.error(response.error);

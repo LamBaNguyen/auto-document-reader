@@ -2,8 +2,7 @@ from flask import Flask
 from flask_pymongo import PyMongo
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-import os
-import secrets
+
 
 def create_app():
     app = Flask(__name__)
@@ -18,7 +17,7 @@ def create_app():
     app.mongo = mongo
 
     # Configure JWT
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(32))
+    app.config['JWT_SECRET_KEY'] = 'nguyenbalam'
     jwt = JWTManager(app)
 
     # Register Blueprints

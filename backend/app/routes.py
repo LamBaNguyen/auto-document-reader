@@ -1,4 +1,4 @@
-from app.controllers.user_controller import register, login
+from app.controllers.user_controller import register, login, add_document, decode, get_data_by_user_id
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
@@ -6,37 +6,47 @@ import base64
 from gtts import gTTS
 import io
 import os
-
+import requests
+import json
 
 # Tạo Blueprint
 auth_bp = Blueprint('auth', __name__)
 
+#
+@auth_bp.route('/getdata', methods=['GET'])
+def get_data():
+    
+    user_id = request.args.get("user_id")
+    print('userID',user_id)
+    return get_data_by_user_id(user_id)
 # Route tts
 @auth_bp.route('/texttospeech', methods=['POST'])
 def text_to_speech():
-    data = request.get_json()
-    text = data.get('text')
-    lang = data.get('lang')
-    gender = data.get('gender')
-    
     try:
-        # Tạo đối tượng gTTS
-        tts = gTTS(text=text, lang=lang, slow=False)
-        
-         # Lưu audio vào bộ nhớ
-        mp3_fp = io.BytesIO()
-        tts.write_to_fp(mp3_fp)
-        
-        # Lấy byte audio từ bộ nhớ
-        audio_data = mp3_fp.getvalue()
-        
-        # Mã hóa sang base64
-        encoded_audio = base64.b64encode(audio_data).decode('utf-8')
-        
-        return jsonify({"data": encoded_audio})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
+        data = request.form
+        text = data.get('text')
+        lang = data.get('lang')
+        gender = data.get('gender')
+        token = data.get('token')
+        user_id=json.loads(token)
+        url = "https://be-read-doc-automatic.vercel.app/api/texttospeech"
+        # Dữ liệu bạn muốn gửi
+        data = {
+            "text": text,
+            "lang": lang,
+            "gender": gender,
+            
+        }
+        # Gửi POST request
+        response = requests.post(url, data=data)
+        #Lưu dữ liệu vào db
+        add_document(user_id['sub'],text,json.loads(response.text)['data'],gender)
+        return response.json()
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
+    
 
 # Route đăng ký
 @auth_bp.route('/auth/register', methods=['POST', 'OPTIONS'])
@@ -44,6 +54,7 @@ def register_route():
     if request.method == 'OPTIONS':
         return '', 200  # Phản hồi thành công cho yêu cầu OPTIONS
     return register()
+
 
 # Route đăng nhập
 @auth_bp.route('/auth/login', methods=['POST'])
